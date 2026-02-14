@@ -54,6 +54,7 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
+            'preferredquality': '256',  # High quality AAC when transcoding is needed
         }]
     
     # Add metadata
