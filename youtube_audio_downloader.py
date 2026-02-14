@@ -36,7 +36,7 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
     # Prefer m4a when available, otherwise fall back to best audio and convert.
     ydl_opts = {
         'format': 'bestaudio[ext=m4a]/bestaudio',
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+        'outtmpl': os.path.join(output_dir, '%(playlist_title|)s', '%(title)s.%(ext)s'),
         'quiet': False,
         'no_warnings': False,
         'extract_flat': False,
