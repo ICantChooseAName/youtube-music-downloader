@@ -33,8 +33,9 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     
     # Configure yt-dlp options
+    # Prefer m4a when available, otherwise fall back to best audio and convert.
     ydl_opts = {
-        'format': 'bestaudio/best',
+        'format': 'bestaudio[ext=m4a]/bestaudio',
         'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
         'quiet': False,
         'no_warnings': False,
@@ -43,6 +44,7 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
     
     # Audio format options
     if format_preference == 'mp3':
+        ydl_opts['format'] = 'bestaudio/best'
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
