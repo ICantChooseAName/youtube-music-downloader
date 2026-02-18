@@ -11,7 +11,14 @@ import argparse
 from pathlib import Path
 
 
-def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oauth=False, watch_later=False):
+def download_audio(
+    urls,
+    output_dir="downloads",
+    format_preference="m4a",
+    cookies_from_browser=None,
+    cookies_file=None,
+    watch_later=False,
+):
     """
     Download audio from YouTube videos.
     
@@ -19,7 +26,8 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
         urls: Single URL string or list of URL strings
         output_dir: Directory to save downloaded files
         format_preference: Preferred audio format ('m4a' or 'mp3')
-        use_oauth: Whether to use OAuth for YouTube authentication
+        cookies_from_browser: Browser to extract cookies from (chrome, firefox, edge, etc.)
+        cookies_file: Path to a cookies.txt file exported from a browser
         watch_later: Whether to download Watch Later playlist
     """
     try:
@@ -63,12 +71,15 @@ def download_audio(urls, output_dir="downloads", format_preference="m4a", use_oa
         'add_metadata': True,
     })
     
-    # OAuth authentication for accessing private playlists like Watch Later
-    if use_oauth or watch_later:
-        ydl_opts['username'] = 'oauth2'
-        ydl_opts['password'] = ''
-        print("\n⚠️  OAuth authentication will be required.")
-        print("A browser window will open for you to log in to your YouTube account.\n")
+    # Cookie-based authentication for accessing private playlists like Watch Later
+    if cookies_from_browser:
+        ydl_opts['cookiesfrombrowser'] = (cookies_from_browser,)
+        print(f"\n🍪 Using cookies from {cookies_from_browser.title()} browser")
+        print("Make sure you're logged into YouTube in your browser!\n")
+    if cookies_file:
+        cookies_file = str(Path(cookies_file).expanduser())
+        ydl_opts['cookiefile'] = cookies_file
+        print(f"\n🍪 Using cookies file: {cookies_file}")
     
     # Handle Watch Later playlist
     if watch_later:
@@ -112,8 +123,11 @@ Examples:
   # Download as MP3 instead of M4A
   python youtube_audio_downloader.py -f mp3 "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
   
-  # Download Watch Later playlist (requires login)
-  python youtube_audio_downloader.py --watch-later
+  # Download Watch Later using Firefox cookies
+  python youtube_audio_downloader.py --watch-later --cookies-from-browser firefox
+  
+  # Download Watch Later using an exported cookies file
+  python youtube_audio_downloader.py --watch-later --cookies ~/Downloads/youtube_cookies.txt
   
   # Specify custom output directory
   python youtube_audio_downloader.py -o ~/Music/YouTube "URL"
@@ -142,13 +156,18 @@ Examples:
     parser.add_argument(
         '--watch-later',
         action='store_true',
-        help='Download all videos from your Watch Later playlist (requires OAuth login)'
+        help='Download all videos from your Watch Later playlist (requires --cookies-from-browser or --cookies)'
     )
     
     parser.add_argument(
-        '--oauth',
-        action='store_true',
-        help='Use OAuth authentication (required for private playlists)'
+        '--cookies-from-browser',
+        choices=['chrome', 'firefox', 'edge', 'safari', 'opera', 'brave', 'chromium'],
+        help='Browser to extract cookies from. Make sure you\'re logged into YouTube in that browser.'
+    )
+    
+    parser.add_argument(
+        '--cookies',
+        help='Path to cookies.txt exported from your browser (alternative to --cookies-from-browser)'
     )
     
     args = parser.parse_args()
@@ -158,6 +177,20 @@ Examples:
         parser.print_help()
         print("\n❌ Error: Please provide at least one URL or use --watch-later flag")
         sys.exit(1)
+    if args.watch_later and not (args.cookies_from_browser or args.cookies):
+        parser.print_help()
+        print("\n❌ Error: --watch-later requires --cookies-from-browser or --cookies")
+        sys.exit(1)
+    if args.cookies_from_browser and args.cookies:
+        parser.print_help()
+        print("\n❌ Error: Use only one of --cookies-from-browser or --cookies")
+        sys.exit(1)
+    if args.cookies:
+        cookies_path = Path(args.cookies).expanduser()
+        if not cookies_path.is_file():
+            print(f"\n❌ Error: cookies file not found: {args.cookies}")
+            sys.exit(1)
+        args.cookies = str(cookies_path)
     
     # Check if ffmpeg is available (required for audio extraction)
     try:
@@ -179,7 +212,8 @@ Examples:
         urls=args.urls,
         output_dir=args.output,
         format_preference=args.format,
-        use_oauth=args.oauth,
+        cookies_from_browser=args.cookies_from_browser,
+        cookies_file=args.cookies,
         watch_later=args.watch_later
     )
 

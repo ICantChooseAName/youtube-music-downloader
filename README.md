@@ -5,7 +5,7 @@ A Python script to download audio from YouTube videos in the best quality availa
 ## Features
 
 - ✅ Download audio from single or multiple YouTube videos
-- ✅ Download entire Watch Later playlist with OAuth authentication
+- ✅ Download entire Watch Later playlist with browser cookies
 - ✅ Choose between M4A (AAC) or MP3 format
 - ✅ Best quality audio extraction
 - ✅ Automatic metadata embedding
@@ -84,9 +84,9 @@ python youtube_audio_downloader.py -f mp3 "https://www.youtube.com/watch?v=VIDEO
 python youtube_audio_downloader.py -o ~/Music/YouTube "VIDEO_URL"
 ```
 
-**Download your entire Watch Later playlist:**
+**Download your entire Watch Later playlist (requires cookies):**
 ```bash
-python youtube_audio_downloader.py --watch-later
+python youtube_audio_downloader.py --watch-later --cookies-from-browser chrome
 ```
 
 ### Command-Line Options
@@ -99,8 +99,10 @@ optional arguments:
   -h, --help           Show help message and exit
   -o, --output DIR     Output directory (default: downloads)
   -f, --format FORMAT  Audio format: m4a or mp3 (default: m4a)
-  --watch-later        Download Watch Later playlist (requires login)
-  --oauth              Use OAuth authentication for private content
+  --watch-later        Download Watch Later playlist (requires --cookies-from-browser or --cookies)
+  --cookies-from-browser
+                       Browser to extract cookies from
+  --cookies            Path to cookies.txt exported from your browser
 ```
 
 ## M4A vs MP3: Which Should You Choose?
@@ -123,18 +125,27 @@ optional arguments:
 
 To download your Watch Later playlist, you need to authenticate:
 
-1. Run the script with `--watch-later` flag
-2. A browser window will open automatically
-3. Log in to your YouTube/Google account
-4. Grant permissions when prompted
-5. The script will continue downloading
+1. Log in to YouTube in your browser
+2. Run the script with `--watch-later` and either `--cookies-from-browser` or `--cookies`
+3. The script will use your browser cookies to access Watch Later
 
-**First time setup:**
+**Example:**
 ```bash
-python youtube_audio_downloader.py --watch-later
+python youtube_audio_downloader.py --watch-later --cookies-from-browser chrome
 ```
 
-The authentication is handled securely through OAuth2 and credentials are cached for future use.
+Cookies are read from your local browser profile; nothing is uploaded.
+Alternatively, export cookies to a file and pass `--cookies /path/to/cookies.txt`.
+
+### Exporting Cookies (Safer Option)
+
+You can export YouTube cookies to a `cookies.txt` file and pass it to the script:
+
+```bash
+python youtube_audio_downloader.py --watch-later --cookies ~/Downloads/youtube_cookies.txt
+```
+
+To export cookies, use a browser extension that exports in Netscape `cookies.txt` format (for example, “Get cookies.txt” for Chrome/Firefox). Store the file securely, and delete it when you’re done.
 
 ## Troubleshooting
 
@@ -150,7 +161,7 @@ Install ffmpeg using the instructions in the Prerequisites section.
 The video might be:
 - Private or deleted
 - Region-restricted
-- Age-restricted (try using `--oauth` to log in)
+- Age-restricted (use `--cookies-from-browser` to access)
 
 ### Download is slow
 This is normal - the script downloads the best quality available, which may be large files.
